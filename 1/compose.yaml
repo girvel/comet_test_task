@@ -1,0 +1,21 @@
+services:
+  api:
+    build: .
+    ports:
+    - 8000:8000
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres
+    restart: always
+    environment:  # TODO! hardcode
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: testdb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]  # TODO! read on this
+      interval: 5s
+      timeout: 5s
+      retries: 10
