@@ -1,3 +1,5 @@
+**/.env
+
 *.docx
 .idea
 
@@ -6,3 +8,5 @@
 **/lib64
 **/__pycache__
 **/pyvenv.cfg
+
+**/.ruff_cache

@@ -1,19 +1,35 @@
 from contextlib import asynccontextmanager
+from functools import lru_cache
 from typing import Annotated, TypeAlias
 
 import asyncpg
 import uvicorn
 from fastapi import APIRouter, FastAPI, Depends, Request
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    postgres_user: str
+    postgres_password: str
+    postgres_db: str
+
+    db_hostname: str
+
+    @classmethod
+    @lru_cache
+    def get(cls):
+        return cls()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
+    settings = Settings.get()
     async with asyncpg.create_pool(
-        host="db",
-        database="testdb",
-        user="postgres",
-        password="postgres",
-    ) as pool:  # TODO! hardcode
+        host=settings.db_hostname,
+        database=settings.postgres_db,
+        user=settings.postgres_user,
+        password=settings.postgres_password,
+    ) as pool:
         yield {"db_pool": pool}
 
 
@@ -41,4 +57,4 @@ def create_app() -> FastAPI:
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:create_app", factory=True, host="0.0.0.0")  # TODO! 0.0.0.0 is probably not hardcode, right?
+    uvicorn.run("main:create_app", factory=True, host="0.0.0.0")
