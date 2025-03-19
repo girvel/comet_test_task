@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+import asyncio
+from dataclasses import dataclass, field
 from typing import Final, Any
 
 from aiohttp import ClientSession
@@ -12,7 +13,7 @@ class RepositoryAuthorCommitsNum:
     commits_num: int
 
 
-@dataclass
+@dataclass(frozen=True)
 class Repository:
     name: str
     owner: str
@@ -21,10 +22,10 @@ class Repository:
     watchers: int
     forks: int
     language: str
-    authors_commits_num_today: list[RepositoryAuthorCommitsNum]
+    authors_commits_num_today: list[RepositoryAuthorCommitsNum] = field(hash=False)
 
 
-class GithubReposScrapper:
+class GithubReposScraper:
     def __init__(self, access_token: str):
         self._session = ClientSession(
             headers={
@@ -49,7 +50,23 @@ class GithubReposScrapper:
         """GitHub REST API: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#list-commits"""
         ...
 
-    async def get_repositories(self) -> list[Repository]: ...
+    async def get_repositories(self) -> list[Repository]:
+        async def f(i: int, repo_raw: dict[str, Any]):  # TODO! limits
+            return Repository(
+                name=repo_raw["name"],
+                owner=repo_raw["owner"]["login"],
+                position=i,
+                stars=repo_raw["stargazers_count"],
+                watchers=repo_raw["watchers_count"],
+                forks=repo_raw["forks"],
+                language=repo_raw["language"],
+                authors_commits_num_today=[],  # TODO!
+            )
+
+        return list(await asyncio.gather(*(
+            f(i, repo_raw)
+            for i, repo_raw in enumerate(await self._get_top_repositories())
+        )))
 
     async def close(self):
         await self._session.close()
