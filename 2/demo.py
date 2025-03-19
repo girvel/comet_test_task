@@ -1,10 +1,16 @@
 import asyncio
 import sys
 
+from aiohttp import ClientResponseError
+
 import main
 
 
 async def entrypoint():
+    if len(sys.argv) != 2:
+        print(f"FORMAT: {sys.argv[0]} <GITHUB_TOKEN>")
+        sys.exit(1)
+
     scrapper = main.GithubReposScraper(sys.argv[1], 10, 10)
     try:
         repos = await scrapper.get_repositories()
@@ -19,6 +25,8 @@ async def entrypoint():
 
         max_repo = repos[max_commits_index]
         print(f"MAX COMMITS IN {max_repo.owner}/{max_repo.name} ({max_commits_n})\n\n{max_repo}")
+    except ClientResponseError as ex:
+        print(f"{ex.status} {ex.message}")
     finally:
         await scrapper.close()
 

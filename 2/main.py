@@ -29,7 +29,7 @@ class Repository:
 
 
 class GithubReposScraper:
-    def __init__(self, access_token: str, mcr: int, rps: int):
+    def __init__(self, access_token: str, mcr: int, rps: float):
         """
         Args:
             access_token: Github access token
@@ -38,11 +38,18 @@ class GithubReposScraper:
         """
 
         self._session = ClientSession(
+            raise_for_status=True,
             headers={
                 "Accept": "application/vnd.github.v3+json",
                 "Authorization": f"Bearer {access_token}",
             }
         )
+
+        if mcr <= 0:
+            raise ValueError("Can't have less than 1 concurrent request")
+
+        if rps <= 0:
+            raise ValueError("Can't have 0 or less requests per second")
 
         self._semaphore = asyncio.Semaphore(mcr)
         self._rps = rps
