@@ -19,6 +19,7 @@ If it was real case, I would:
 - Assumed that `position` means "index", would've clarified if it was a real task
 - `watchers_count` field in github API search seems to be broken (at least in my tests)
 - Uses email, not login/full name as "author", as only email is unique
+- There is a `demo.py` for manual testing/demonstration purposes
 
 ## Задание #3
 

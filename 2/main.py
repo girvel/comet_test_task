@@ -50,13 +50,22 @@ class GithubReposScraper:
 
     async def _get_repository_commits(self, owner: str, repo: str) -> list[dict[str, Any]]:
         """GitHub REST API: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#list-commits"""
-        data = await self._make_request(
-            endpoint=f"repos/{owner}/{repo}/commits",
-            params={
-                "since": (datetime.now() - timedelta(days=1)).isoformat(timespec="seconds") + "Z",
-                "per_page": 100,
-            },
-        )  # TODO! handle more than 100
+        PER_PAGE = 100
+        PAGES_N_SANE_MAX = 10
+
+        data = []
+        for i in range(PAGES_N_SANE_MAX):
+            page = await self._make_request(
+                endpoint=f"repos/{owner}/{repo}/commits",
+                params={
+                    "since": (datetime.now() - timedelta(days=1)).isoformat(timespec="seconds") + "Z",
+                    "per_page": PER_PAGE,
+                    "page": i + 1,
+                },
+            )
+            data.extend(page)
+            if len(page) < PER_PAGE:
+                break
 
         return data
 
