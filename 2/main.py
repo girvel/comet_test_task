@@ -2,6 +2,7 @@ import asyncio
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from time import time
 from typing import Final, Any
 
 from aiohttp import ClientSession
@@ -28,7 +29,14 @@ class Repository:
 
 
 class GithubReposScraper:
-    def __init__(self, access_token: str):
+    def __init__(self, access_token: str, mcr: int, rps: int):
+        """
+        Args:
+            access_token: Github access token
+            mcr: maximal number of concurrent requests
+            rps: maximal number of requests per second
+        """
+
         self._session = ClientSession(
             headers={
                 "Accept": "application/vnd.github.v3+json",
@@ -36,9 +44,22 @@ class GithubReposScraper:
             }
         )
 
+        self._semaphore = asyncio.Semaphore(mcr)
+        self._rps = rps
+
     async def _make_request(self, endpoint: str, method: str = "GET", params: dict[str, Any] | None = None) -> Any:
-        async with self._session.request(method, f"{GITHUB_API_BASE_URL}/{endpoint}", params=params) as response:
-            return await response.json()
+        async with self._semaphore:
+            t = time()
+
+            async with self._session.request(method, f"{GITHUB_API_BASE_URL}/{endpoint}", params=params) as response:
+                result = await response.json()
+
+            t = time() - t
+            wait_time = 1 / self._rps - t
+            if wait_time > 0:
+                await asyncio.sleep(wait_time)
+
+            return result
 
     async def _get_top_repositories(self, limit: int = 100) -> list[dict[str, Any]]:
         """GitHub REST API: https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-repositories"""
@@ -70,7 +91,7 @@ class GithubReposScraper:
         return data
 
     async def get_repositories(self) -> list[Repository]:
-        async def f(i: int, repo_raw: dict[str, Any]):  # TODO! limits
+        async def f(i: int, repo_raw: dict[str, Any]):
             commits_by_author = defaultdict(lambda: 0)
             for entry in await self._get_repository_commits(repo_raw["owner"]["login"], repo_raw["name"]):
                 commits_by_author[entry["commit"]["author"]["email"]] += 1

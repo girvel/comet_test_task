@@ -5,7 +5,7 @@ import main
 
 
 async def entrypoint():
-    scrapper = main.GithubReposScraper(sys.argv[1])
+    scrapper = main.GithubReposScraper(sys.argv[1], 10, 10)
     try:
         repos = await scrapper.get_repositories()
 
@@ -18,7 +18,7 @@ async def entrypoint():
                 max_commits_index = i
 
         max_repo = repos[max_commits_index]
-        print(f"MAX COMMITS IN {max_repo.owner}/{max_repo.name} ({max_commits_n}\n\n{max_repo})")
+        print(f"MAX COMMITS IN {max_repo.owner}/{max_repo.name} ({max_commits_n})\n\n{max_repo}")
     finally:
         await scrapper.close()
 
