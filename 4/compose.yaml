@@ -1,0 +1,10 @@
+services:
+  db:
+    image: clickhouse/clickhouse-server
+    ports:
+    - "8123:8123"
+    environment:
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: clickhouse
+    volumes:
+    - ./table.sql:/docker-entrypoint-initdb.d/init.sql

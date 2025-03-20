@@ -45,7 +45,7 @@ class GithubReposScraper:
             }
         )
 
-        if mcr <= 0:
+        if mcr < 1:
             raise ValueError("Can't have less than 1 concurrent request")
 
         if rps <= 0:
