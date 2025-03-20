@@ -15,8 +15,9 @@ TODO! enforce PEP-8
 
 ```sh
 cd 1
-vi .env  # требуются переменные POSTGRES_{USER,PASSWORD,DB}
+vi .env  # требуются переменные POSTGRES_{PASSWORD,DB}
 docker compose up
+# открыть http://localhost:8000/api/db_version в браузере
 ```
 
 Оставил всё в одном файле для удобства ревью, в реальном приложении настройки, сетап, зависимости и руты распределяются по отдельным файлам.
