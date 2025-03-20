@@ -26,7 +26,8 @@ async def entrypoint():
         max_repo = repos[max_commits_index]
         print(f"MAX COMMITS IN {max_repo.owner}/{max_repo.name} ({max_commits_n})\n\n{max_repo}")
     except ClientResponseError as ex:
-        print(f"{ex.status} {ex.message}")
+        print(f"Error scraping GitHub: {ex.status} {ex.message}")
+        sys.exit(1)
     finally:
         await scrapper.close()
 
