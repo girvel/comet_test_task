@@ -3,6 +3,7 @@
 [Текст задания](/TASK.md)
 
 TODO!
+TODO! retest running instructions
 
 ## Задание #1
 
@@ -14,7 +15,7 @@ why single-file
 If it was real case, I would:
 - talk about using BaseModel instead of dataclasses for consistency
 - consider using `with` instead of manual `.close()`
-- no bounds for scraping were provided => none introduced, assumed non-important, just scraping 100 values for now
+- no bounds for scraping were provided => none introduced, assumed non-important, just scraping 100 values for now; if introducing bounds, my recommendation is by page index + detection of repetitions
 - Renamed Scrapper -> Scraper
 - Assumed that `position` means "index", would've clarified if it was a real task
 - `watchers_count` field in github API search seems to be broken (at least in my tests)
@@ -23,5 +24,7 @@ If it was real case, I would:
 - Throws aiohttp exceptions, should be handled on user-side as shown in `demo.py`
 
 ## Задание #3
+
+- 3/scraper.py is a copy of 2/main.py
 
 ## Задание #4
