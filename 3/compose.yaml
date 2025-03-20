@@ -2,6 +2,7 @@ services:
   db:
     image: clickhouse/clickhouse-server
     env_file: .env
+    # ports: ["8123:8123"]  # uncomment this to be able to connect to DB from outside
     volumes:
     - ./tables.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:

@@ -4,6 +4,7 @@
 
 TODO!
 TODO! retest running instructions
+TODO! enforce PEP-8
 
 ## Задание #1
 
