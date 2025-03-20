@@ -1,30 +1,39 @@
 import asyncio
 import os
+import sys
 from datetime import datetime
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientResponseError
 from aiochclient import ChClient
 
 from scraper import GithubReposScraper
 
-USER = os.getenv("CLICKHOUSE_USER")
-PASSWORD = os.getenv("CLICKHOUSE_PASSWORD")
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-
-assert len(USER) > 0 and len(PASSWORD) > 0 and len(GITHUB_TOKEN) > 0
-
 
 async def main():
+    USER = os.getenv("CLICKHOUSE_USER")
+    PASSWORD = os.getenv("CLICKHOUSE_PASSWORD")
+    GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+
+    if not (len(USER) > 0 and len(PASSWORD) > 0 and len(GITHUB_TOKEN) > 0):
+        print("Error: environment variables CLICKHOUSE_USER, CLICKHOUSE_PASSWORD and GITHUB_TOKEN are required")
+        sys.exit(1)
+
     async with (
         ClientSession() as session,
         ChClient(session, "http://db:8123", user=USER, password=PASSWORD) as client
     ):
-        assert await client.is_alive()
-        print(f"Version is {await client.fetchval('SELECT version()')}")
+        if not await client.is_alive():
+            print("Unable to connect to clickhouse")
+            sys.exit(1)
+
+        print(f"DB version is {await client.fetchval('SELECT version()')}")
 
         scraper = GithubReposScraper(GITHUB_TOKEN, mcr=10, rps=10)
         try:
             repos = await scraper.get_repositories()
+        except ClientResponseError as ex:
+            print(f"Error scraping github: {ex.status}, {ex.message}")
+            sys.exit(1)
         finally:
             await scraper.close()
 
@@ -66,6 +75,7 @@ async def main():
         )
 
         print(f"Pushed results ({len(repos)}) to the DB")
+        print("Finished.")
 
 
 if __name__ == "__main__":
