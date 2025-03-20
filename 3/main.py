@@ -40,6 +40,7 @@ async def main():
         print("Scraped repositories")
 
         updated_time = datetime.now().replace(microsecond=0)
+        # .replace prevents aiochclient datetime bug
 
         await client.execute(
             "INSERT INTO test.repositories SETTINGS async_insert=1, wait_for_async_insert=1 VALUES",

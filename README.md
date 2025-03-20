@@ -2,32 +2,60 @@
 
 [Текст задания](/TASK.md)
 
-TODO!
 TODO! retest running instructions
 TODO! enforce PEP-8
 
+## Общие заметки
+
+В тексте задания есть требование уделить значительное внимание архитектуре. Первое задание -- это hello world для FastAPI + PostgreSQL. Второе задание -- один класс с заранее заданным внешним интерфейсом. Третье задание это запись данных в БД. Четвёртое -- один запрос. Все четыре задачи маленькие, с чёткими границами и выглядят как компоненты для большей системы, о которой ничего неизвестно; здесь не может быть никакой архитектуры, любая попытка что-то дополнительно структурировать в таком маленьком объёме кода и без контекста будет попросту вредоносна.
+
 ## Задание #1
 
-how to launch: fill .env + docker compose
-why single-file
+Запуск:
+
+```sh
+cd 1
+vi .env  # требуются переменные POSTGRES_{USER,PASSWORD,DB}
+docker compose up
+```
+
+Оставил всё в одном файле для удобства ревью, в реальном приложении настройки, сетап, зависимости и руты распределяются по отдельным файлам.
 
 ## Задание #2
 
-If it was real case, I would:
-- talk about using BaseModel instead of dataclasses for consistency
-- consider using `with` instead of manual `.close()`
-- no bounds for scraping were provided => none introduced, assumed non-important, just scraping 100 values for now; if introducing bounds, my recommendation is by page index + detection of repetitions
-- Renamed Scrapper -> Scraper
-- Assumed that `position` means "index", would've clarified if it was a real task
-- `watchers_count` field in github API search seems to be broken (at least in my tests)
-- Uses email, not login/full name as "author", as only email is unique
-- There is a `demo.py` for manual testing/demonstration purposes; launch by passing a token through
-- Throws aiohttp exceptions, should be handled on user-side as shown in `demo.py`
+Запуск:
+
+```sh
+cd 2
+pip install -r requirements.txt  # venv в случае конфликтов версий
+python3.11 demo.py <GITHUB_TOKEN>  # демонстрационный скрипт
+```
+
+- Можно добавить в `GithubReposScraper` совместимость с `with`, но это вопрос внутренних конвенций
+- Переименовал `Scrapper -> Scraper`
+- Поле `watchers_count` в GitHub API, видимо, сломано -- оно совпадает с количеством звёзд
+- Scraper позволяет aiohttp исключениям пролетать -- они вполне информативны, и ошибки должны разрешаться на стороне пользователя (см. `2/demo.py`)
+- Не вводил никакого контроля рамок, scraper просто берёт топ 100 -- в задании ничего об этом не было, предположил что это неважно. Обратите внимание -- если брать больше одной страницы поиска, могут быть редкие коллизии между их содержимым
 
 ## Задание #3
 
-- 3/scraper.py is a copy of 2/main.py
-- Didn't add pydantic as a dependency, handled environment variables using `os`
-- No persistence logic (s. a. keeping volumes, preventing table reinitialization)
+Запуск:
+
+```sh
+cd 3
+vi .env  # требуются переменные GITHUB_TOKEN, CLICKHOUSE_{USER,PASSWORD}
+docker compose up
+```
+
+- `3/scraper.py` это копия `2/main.py`
+- Не стал вводить pydantic как зависимость, скрипт выдёргивает переменные через `os.getenv` (см. rule of least power)
 
 ## Задание #4
+
+Запуск:
+
+```sh
+cd 4
+docker compose up
+# запустить query.sql любым удобным способом
+```

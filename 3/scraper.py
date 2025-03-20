@@ -98,10 +98,11 @@ class GithubReposScraper:
         return data
 
     async def get_repositories(self) -> list[Repository]:
+        """Throws aiohttp exceptions"""
         async def f(i: int, repo_raw: dict[str, Any]):
             commits_by_author = defaultdict(lambda: 0)
             for entry in await self._get_repository_commits(repo_raw["owner"]["login"], repo_raw["name"]):
-                commits_by_author[entry["commit"]["author"]["email"]] += 1
+                commits_by_author[entry["commit"]["author"]["email"]] += 1  # because only email is unique
 
             return Repository(
                 name=repo_raw["name"],
