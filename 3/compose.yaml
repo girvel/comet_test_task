@@ -1,9 +1,9 @@
 services:
   db:
     image: clickhouse/clickhouse-server
-    environment:
-      CLICKHOUSE_USER: clickhouse
-      CLICKHOUSE_PASSWORD: clickhouse
+    env_file: .env
+    volumes:
+    - ./tables.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: wget --no-verbose --tries=1 http://127.0.0.1:8123/ping || exit 1
       interval: 5s
@@ -12,6 +12,7 @@ services:
 
   scraper:
     build: .
+    env_file: .env
     depends_on:
       db:
         condition: service_healthy

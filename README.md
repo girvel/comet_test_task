@@ -26,5 +26,7 @@ If it was real case, I would:
 ## Задание #3
 
 - 3/scraper.py is a copy of 2/main.py
+- Didn't add pydantic as a dependency, handled environment variables using `os`
+- No persistence logic (s. a. keeping volumes, preventing table reinitialization)
 
 ## Задание #4
