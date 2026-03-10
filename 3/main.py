@@ -2,11 +2,18 @@ import asyncio
 import os
 import sys
 from datetime import datetime
+from itertools import islice
 
 from aiohttp import ClientSession, ClientResponseError
 from aiochclient import ChClient
 
 from scraper import GithubReposScraper
+
+
+def chunked(iterable, size):
+    it = iter(iterable)
+    while chunk := tuple(islice(it, size)):
+        yield chunk
 
 
 async def main():
@@ -40,40 +47,43 @@ async def main():
         print("Scraped repositories")
 
         updated_time = datetime.now().replace(microsecond=0)
-        # .replace prevents aiochclient datetime bug
+            # .replace prevents aiochclient datetime bug
+        BATCH_SIZE = 10
+            # for demo purposes, better value would be something like 128 or 1024
 
-        await client.execute(
-            "INSERT INTO test.repositories SETTINGS async_insert=1, wait_for_async_insert=1 VALUES",
-            *(
-                (repo.name, repo.owner, repo.stars, repo.watchers, repo.forks, repo.language, updated_time)
-                for repo in repos
-            )
+        repos_generator = (
+            (
+                repo.name, repo.owner, repo.stars, repo.watchers, repo.forks, repo.language,
+                updated_time
+            ) for repo in repos
         )
+        for chunk in chunked(repos_generator, BATCH_SIZE):
+            await client.execute("""
+                INSERT INTO test.repositories SETTINGS async_insert=1, wait_for_async_insert=1 VALUES
+            """, *chunk)
 
-        await client.execute(
-            """
+        authors_generator = (
+            (updated_time.date(), f"{repo.owner}/{repo.name}", entry.author, entry.commits_num)
+            for repo in repos
+            for entry in repo.authors_commits_num_today
+        )
+        for chunk in chunked(authors_generator, BATCH_SIZE):
+            await client.execute("""
                 INSERT INTO test.repositories_authors_commits
                 SETTINGS async_insert=1, wait_for_async_insert=1
                 VALUES
-            """,
-            *(
-                (updated_time.date(), f"{repo.owner}/{repo.name}", entry.author, entry.commits_num)
-                for repo in repos
-                for entry in repo.authors_commits_num_today
-            )
-        )
+            """, *chunk)
 
-        await client.execute(
-            """
+        positions_generator = (
+            (updated_time.date(), f"{repo.owner}/{repo.name}", repo.position)
+            for repo in repos
+        )
+        for chunk in chunked(positions_generator, BATCH_SIZE):
+            await client.execute( """
                 INSERT INTO test.repositories_positions
                 SETTINGS async_insert=1, wait_for_async_insert=1
                 VALUES
-            """,
-            *(
-                (updated_time.date(), f"{repo.owner}/{repo.name}", repo.position)
-                for repo in repos
-            )
-        )
+            """, *chunk)
 
         print(f"Pushed results ({len(repos)}) to the DB")
         print("Finished.")
